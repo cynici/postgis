@@ -73,7 +73,7 @@ docker-compose -f docker-compose.yml up -d
 
 ## Production Use
 
-* The default postgresql.conf is good enough for development but for production use, consider using [guided parameter tuning](http://pgtune.leopard.in.ua/)
+* The default postgresql.conf is good enough for development but for production use, consider using [guided parameter tuning](http://pgtune.leopard.in.ua/). Or run [pgtune in a docker](http://imincik.blogspot.co.za/2016/08/automatic-postgresql-tuning-in-ansible.html).
 
 * Plan for disaster.
 
