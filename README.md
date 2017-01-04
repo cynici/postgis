@@ -1,19 +1,18 @@
 # PostgreSQL and PostGIS in a Docker container
 
-
-## About
-
-This Docker project creates a PostgreSQL and PostGIS database server in a container on a suitable host machine. It is inspired by base image [mdillon/postgis](https://hub.docker.com/r/mdillon/postgis/~/dockerfile/) but includes syslog ~~and   [pg-barman](http://www.pgbarman.org/) which is an essential tool for database archive/backup/restore~~.
+This project creates a PostgreSQL and PostGIS database server in a Docker container. It is inspired by base image [mdillon/postgis](https://hub.docker.com/r/mdillon/postgis/~/dockerfile/) but includes syslog ~~and [pg-barman](http://www.pgbarman.org/) which is an essential tool for database archive/backup/restore~~.
 
 [2015-09-16 update]
 pg-barman requires ssh server on both the live and backup database servers, thus making it unsuitable for postgresql server running as Docker container
 
-With syslog, one could log to files and feed into feature-rich log analysis software like [Graylog2](https://www.digitalocean.com/community/tutorials/how-to-install-graylog2-and-centralize-logs-on-ubuntu-14-04),  [ELK stack](http://www.freeipa.org/page/Howto/Centralised_Logging_with_Logstash/ElasticSearch/Kibana), etc. in real time in *postgresql.conf*:
+With syslog, one could log to files and feed into feature-rich log analysis software like [Graylog2](https://www.digitalocean.com/community/tutorials/how-to-install-graylog2-and-centralize-logs-on-ubuntu-14-04), [ELK stack](http://www.freeipa.org/page/Howto/Centralised_Logging_with_Logstash/ElasticSearch/Kibana), etc. in real time in *postgresql.conf*:
 
 ```
 log_destination = 'stderr,syslog'
 logging_collector = on
 ```
+
+## Docker entrypoint and custom initialization
 
 The base image Dockerfile uses [/docker-entrypoint.sh](https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh) as ENTRYPOINT
 
@@ -26,6 +25,7 @@ From the [base image README](https://hub.docker.com/_/postgres/):
 >
 >If there is no database when postgres starts in a container, then postgres will create the default database for you. While this is the expected behavior of postgres, this means that it will not accept incoming connections during that time. This may cause issues when using automation tools, such as **docker-compose**, that start several containers simultaneously.
 
+
 ## Usage
 
 * Create your *docker-compose.yml* file
@@ -34,16 +34,11 @@ From the [base image README](https://hub.docker.com/_/postgres/):
 postgis:
   # Either use autobuild image on Docker hub or build locally from Dockerfile:
   image: cheewai/postgis
-  #build: .
-
-  # Specify container name also ensures only one instance is started
-  #container_name: postgis
 
   # Refer to https://hub.docker.com/_/postgres/ for other possibilities
   environment:
    - PGDATA=/var/lib/postgresql/data
    - POSTGRES_PASSWORD=
-   #- POSTGRES_USER=postgres
 
   ports:
    - "5432:5432"
@@ -70,6 +65,19 @@ docker-compose -f docker-compose.yml build
 ```
 docker-compose -f docker-compose.yml up -d
 ```
+
+## Optional. Set UID and GID of postgres user
+
+By default, the postgres user in the Docker image is assigned some arbitrary numeric UID/GID during package installation. If you want to force the UID/GID to specific values, add these lines with the appropriate indentation to your *docker-compose.yml*:
+
+```
+environment:
+  - POSTGRES_UID={your_uid}
+  - POSTGRES_GID={your_gid}
+entrypoint:
+  - /set-postgres-uid.sh
+```
+
 
 ## Production Use
 
