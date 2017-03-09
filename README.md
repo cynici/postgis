@@ -134,3 +134,68 @@ To delete old WAL archive using pg_archivecleanup, read  http://stackoverflow.co
 ### High-availability
 
 *postgresql.conf* has a section for replication. Refer to https://wiki.postgresql.org/wiki/Streaming_Replication
+
+
+### Upgrade database between major releases
+
+Between upgrade between minor releases PostgreSQL, restarting the server using the new binaries should just work. For PostGIS, you can usually perform [soft upgrade](http://postgis.net/docs/postgis_installation.html#soft_upgrade) while the database is online.
+
+This section refers specifically to upgrade between major releases of either PostgreSQL or PostGIS. The bundled `pg_upgrade` is only good for vanilla PostgreSQL databases that do not use PostGIS extension.
+
+I haven't found a reliable way other than [hard upgrade](http://postgis.net/docs/postgis_installation.html#hard_upgrade) which requires the server to be offline during the upgrade. An outline of the steps involved:
+
+* Dump roles, `pg_dumpall --roles-only -U postgres -f roles.sql`
+
+* Dump individual database, `pg_dump -Fc -b -U postgres {db} -f {db}.dmp
+
+* Start up an instance of the desired new version of PostgreSQL server
+  * make sure `initdb` is executed
+  * avail *roles.sql* and all the dump files in a mounted volume 
+
+* Create roles
+
+* Create database and import from dump file. This script serves only as an example to be adapted according to your needs, particularly the database encoding, locale, and PostGIS extensions.
+
+```
+#! /bin/bash
+#
+# - To be run as 'postgres' user inside container
+# - /restore contains all the database dump files
+# - /restore must be writable by 'postgres'
+
+# where 'pg_dump -Fc -b -v' output is, named as {dbname}-*.dmp
+DMPDIR="${DMPDIR:-/restore}"
+
+cd $DMPDIR || {
+  echo "DMPDIR '$DMPDIR' must point to existing directory where {dbname}-*.dmp is found" >&2
+  exit 1
+}
+
+if [ $# -gt 0 ]; then
+  _flist="$@"
+  for _f in $_flist; do
+    [ -f $_f ] || {
+      echo "pg_dump file '$DMPDIR/$_f' not found" >&2
+      exit 1
+    }
+  done
+else
+  _flist="$(echo *.dmp)"
+fi
+
+for _f in $_flist ; do
+  _db="${_f%-*}"
+  _dbuniq=$(echo $_db* | wc -l)
+  [ $_dbuniq -eq 1 ] || {
+    echo "More than one dmp file for '$_db' in $DMPDIR" >&2
+    exit
+  }
+  createdb -E UTF8 --locale=en_ZA.UTF-8 $_db 
+  _err=$?
+  [ $_err -eq 0 ] || continue
+  psql $_db -c "CREATE EXTENSION postgis;" 
+  psql $_db -c "CREATE EXTENSION postgis_topology;"
+  time /usr/share/postgresql/9.6/contrib/postgis-2.3/postgis_restore.pl $_f | psql $_db >"${DMPDIR}/restore-${_db}.log" 2>&1
+done
+```
+
