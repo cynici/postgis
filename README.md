@@ -140,7 +140,13 @@ To delete old WAL archive using pg_archivecleanup, read  http://stackoverflow.co
 
 Between upgrade between minor releases PostgreSQL, restarting the server using the new binaries should just work. For PostGIS, you can usually perform [soft upgrade](http://postgis.net/docs/postgis_installation.html#soft_upgrade) while the database is online.
 
-This section refers specifically to upgrade between major releases of either PostgreSQL or PostGIS. The bundled `pg_upgrade` is only good for vanilla PostgreSQL databases that do not use PostGIS extension. I haven't found a reliable way other than [hard upgrade](http://postgis.net/docs/postgis_installation.html#hard_upgrade) which requires the server to be offline during the upgrade. An outline of the steps involved:
+It turns out that there several online approaches available but your mileage may vary:
+
+* [PGLogical](https://2ndquadrant.com/en/resources/pglogical/)
+* [Slony-I](http://slony.info/documentation/1.2/versionupgrade.html)
+* [Skytool3 + PGQ + londiste3](https://blog.lateral.io/2015/09/postgresql-replication-with-londiste-from-skytools-3/)
+
+This section refers specifically the most conservative approach to upgrade between major releases of either PostgreSQL or PostGIS. The bundled `pg_upgrade` is only good for vanilla PostgreSQL databases that do not use PostGIS extension. I haven't found a reliable way other than [hard upgrade](http://postgis.net/docs/postgis_installation.html#hard_upgrade) which requires the server to be offline during the upgrade. An outline of the steps involved:
 
 * Dump roles, `pg_dumpall --roles-only -U postgres -f roles.sql`
 
