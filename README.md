@@ -1,10 +1,10 @@
 # PostgreSQL and PostGIS in a Docker container
 
-This project creates a PostgreSQL and PostGIS database server in a Docker container. It is inspired by base image [mdillon/postgis](https://hub.docker.com/r/mdillon/postgis/~/dockerfile/) but includes syslog.
+This project creates a PostgreSQL and PostGIS database server in a Docker container. It is inspired by base image [mdillon/postgis](https://hub.docker.com/r/mdillon/postgis/~/dockerfile/) and includes rsyslog.
 
-Do check out https://hub.docker.com/r/hegand/postgres-postgis/, this image based on alpine linux which is less than 200 MB!
+The tiny [postgres:alpine](https://hub.docker.com/_/postgres/) is not used as the base image because it is tricky to compile PostGIS in it.
 
-With syslog, one could log to files and feed into feature-rich log analysis software like [Graylog2](https://www.digitalocean.com/community/tutorials/how-to-install-graylog2-and-centralize-logs-on-ubuntu-14-04), [ELK stack](http://www.freeipa.org/page/Howto/Centralised_Logging_with_Logstash/ElasticSearch/Kibana), etc. in real time in *postgresql.conf*:
+With rsyslog, one could log to files and feed into feature-rich log analysis software like [Graylog2](https://www.digitalocean.com/community/tutorials/how-to-install-graylog2-and-centralize-logs-on-ubuntu-14-04), [ELK stack](http://www.freeipa.org/page/Howto/Centralised_Logging_with_Logstash/ElasticSearch/Kibana), etc. in real time in *postgresql.conf*:
 
 ```
 log_destination = 'stderr,syslog'
@@ -27,47 +27,51 @@ From the [base image README](https://hub.docker.com/_/postgres/):
 
 ## Usage
 
-* Create your *docker-compose.yml* file
+### Create your *docker-compose.yml* file
 
 ```
-postgis:
-  # Either use autobuild image on Docker hub or build locally from Dockerfile:
-  image: cheewai/postgis
-
-  # Refer to https://hub.docker.com/_/postgres/ for other possibilities
-  environment:
-   - PGDATA=/var/lib/postgresql/data
-   - POSTGRES_PASSWORD=
-
-  ports:
-   - "5432:5432"
-
-  volumes:
-   # Mount your data directory so your database may be persisted
-   - path/to/data/directory:/var/lib/postgresql/data
-   #*** If you have no existing database, comment the following the first-run
-   #*** Empty data directory triggers initdb to be run
-   # Customize access control to overwrite the default
-   #- path/to/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf:ro
-   # Customize server tuning parameters to overwrite the default
-   #- path/to/postgresql.conf:/var/lib/postgresql/data/postgresql.conf:ro
+version: '2'
+services:
+  db:
+    image: cheewai/postgis
+    # Refer to https://hub.docker.com/_/postgres/ for other possibilities
+    environment:
+      # Specify both UID and GID so data files are owned by real user
+      #- POSTGRES_UID=
+      #- POSTGRES_GID=
+      # Custom pg_hba.conf and postgresql.conf should be mounted here
+      - PGDATA=/var/lib/postgresql/data
+    ports:
+     - "5432:5432"
+    volumes:
+     # Mount your data directory so your database may be persisted
+     - path/to/data/directory:/var/lib/postgresql/data
+     #*** If you have no existing database, comment the following the first-run
+     #*** Empty data directory triggers initdb to be run
+     # Customize access control to overwrite the default
+     #- path/to/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf:ro
+     # Customize server tuning parameters to overwrite the default
+     #- path/to/postgresql.conf:/var/lib/postgresql/data/postgresql.conf:ro
+    restart: on-failure:5
 ```
 
-* Build the Docker image:
+### Initialize PostgreSQL database
+
+When the container starts up, an empty data directory as defined by *PGDATA* will trigger `docker-entrypoint.sh` to initialize PostgreSQL database.
+
+If you have no existing database, make sure that the data directory exists but is completely empty. Specify this directory as a volume and map it to the **same** directory within the container specified by the environment variable *PGDATA*.
 
 ```
-docker-compose -f docker-compose.yml build
+docker-compose -f docker-compose.yml up
 ```
 
-* Run the newly built Docker image:
+Additional bootstrapping SQL script may be placed in `/docker-entrypoint-initdb.d/` directory. Check out the [base image](https://store.docker.com/images/postgres) documentation for details.
 
-```
-docker-compose -f docker-compose.yml up -d
-```
 
 ## Optional. Set UID and GID of postgres user
 
-By default, the postgres user in the Docker image is assigned some arbitrary numeric UID/GID during package installation. If you want to force the UID/GID to specific values, add these lines with the appropriate indentation to your *docker-compose.yml*:
+By default, the postgres user in the Docker image is assigned some arbitrary numeric UID/GID i.e. 999, during package installation. By specifying the following environment variables to the same UID and GID of the user who runs `docker-compose`, the database files created will be owned the same user.
+Add these lines with the appropriate indentation to your *docker-compose.yml*:
 
 ```
 environment:
