@@ -27,19 +27,21 @@ From the [base image README](https://hub.docker.com/_/postgres/):
 
 ## Usage
 
+Before you use the sample file below, read about:
+
+- Mountpoint (docker volume) and `PGDATA` http://thebuild.com/blog/2018/03/27/mountpoints-and-the-single-postgresql-server/
+
+- Full list of environment variables https://hub.docker.com/\_/postgres/ for other possibilities
+
+
 ### Create your *docker-compose.yml* file
 
 ```
-version: '2'
+version: '2.2'
 services:
   db:
     image: cheewai/postgis
-    # Refer to https://hub.docker.com/_/postgres/ for other possibilities
     environment:
-      # Specify both UID and GID so data files are owned by real user
-      #- POSTGRES_UID=
-      #- POSTGRES_GID=
-      # Custom pg_hba.conf and postgresql.conf should be mounted here
       - PGDATA=/var/lib/postgresql/data
     ports:
      - "5432:5432"
@@ -57,15 +59,18 @@ services:
 
 ### Initialize PostgreSQL database
 
-When the container starts up, an empty data directory as defined by *PGDATA* will trigger `docker-entrypoint.sh` to initialize PostgreSQL database.
+When the container starts up, if *PGDATA* directory is empty, the bootstrapping script will run `docker-entrypoint.sh` to initialize PostgreSQL database.
 
-If you have no existing database, make sure that the data directory exists but is completely empty. Specify this directory as a volume and map it to the **same** directory within the container specified by the environment variable *PGDATA*.
+The initialization script will also execute any additional bootstrapping scripts it finds in `/docker-entrypoint-initdb.d/` if this directory exists.  Subsequent runs of the container will ignore `/docker-entrypoint-initdb.d/`.
+
+Check out the [base image](https://store.docker.com/images/postgres) documentation for details.
+
 
 ```
 docker-compose -f docker-compose.yml up
 ```
 
-Additional bootstrapping SQL script may be placed in `/docker-entrypoint-initdb.d/` directory. Check out the [base image](https://store.docker.com/images/postgres) documentation for details.
+When you see the database server ready message, you may stop the container and customise `postgres.conf` and `pg_hba.conf` in *PGDATA* directory.
 
 
 ## Optional. Set UID and GID of postgres user
@@ -77,8 +82,7 @@ Add these lines with the appropriate indentation to your *docker-compose.yml*:
 environment:
   - POSTGRES_UID={your_uid}
   - POSTGRES_GID={your_gid}
-entrypoint:
-  - /set-postgres-uid.sh
+entrypoint: ["/set-postgres-uid.sh"]
 ```
 
 
