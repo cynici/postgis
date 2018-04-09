@@ -9,6 +9,18 @@ With rsyslog, one could log to files and feed into feature-rich log analysis sof
 ```
 log_destination = 'stderr,syslog'
 logging_collector = on
+log_directory = '/var/log/postgresql'
+log_filename = 'postgresql-%Y%m%d-%H%M%S.log'
+log_rotation_size = 1GB
+log_rotation_age = 1d
+log_min_duration_statement = 250ms
+log_checkpoints = on
+log_connections = on
+log_disconnections = on
+log_lock_waits = on
+log_statement = 'ddl'
+log_temp_files = 0
+log_autovacuum_min_duration = 1000
 ```
 
 ## Docker entrypoint and custom initialization
