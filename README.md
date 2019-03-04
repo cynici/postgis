@@ -23,6 +23,20 @@ log_temp_files = 0
 log_autovacuum_min_duration = 1000
 ```
 
+## CAVEAT
+
+- If you are upgrading from an existing database with an older release of PostGIS, be sure to read the upgrade instructions on https://postgis.net/install/ in case the instructions below are outdated.
+
+```
+ALTER EXTENSION postgis UPDATE;
+ALTER EXTENSION postgis_topology UPDATE;
+
+# or to specific version
+ALTER EXTENSION postgis UPDATE TO "2.5.1";
+ALTER EXTENSION postgis_topology UPDATE TO "2.5.1";
+ALTER EXTENSION postgis_tiger_geocoder UPDATE TO "2.5.1";
+```
+
 ## Docker entrypoint and custom initialization
 
 The base image Dockerfile uses [/docker-entrypoint.sh](https://github.com/docker-library/postgres/blob/master/docker-entrypoint.sh) as ENTRYPOINT
