@@ -1,14 +1,14 @@
-FROM postgres:10
+FROM postgres:9.6
 LABEL maintainer "Cheewai Lai <clai@csir.co.za>"
 
 # Subscribe to pgsql-pkg-debian@postgresql.org for release announcements
 # and watch https://github.com/docker-library/postgres Dockerfile
 ARG POSTGIS_MAJOR=2.5
 
+ARG DEBIAN_FRONTEND=noninteractive
 ENV LANG en_ZA.UTF-8
 ENV LANGUAGE en_ZA.UTF-8
 
-ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
 && apt-get install -y --no-install-recommends \
  postgis \
@@ -17,8 +17,8 @@ RUN apt-get update \
  locales \
  rsyslog \
  curl \
- pgbouncer \
  wget \
+ pgbouncer \
 && curl -sSL https://dl.2ndquadrant.com/default/release/get/deb | bash \
 && apt-get update \
 && apt-get install -y --no-install-recommends postgresql-$PG_MAJOR-pglogical \
@@ -30,5 +30,5 @@ RUN apt-get update \
 && dpkg-reconfigure locales \
 && rm -rf /var/lib/apt/lists/*
 
-# Entrypoint script sets UID/GID of postgres user
+# Optional entrypoint script to set UID/GID of postgres user
 ADD set-postgres-uid.sh /set-postgres-uid.sh
