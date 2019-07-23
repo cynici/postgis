@@ -25,7 +25,14 @@ log_autovacuum_min_duration = 1000
 
 ## CAVEAT
 
-- If you are upgrading from an existing database with an older release of PostGIS, be sure to read the upgrade instructions on https://postgis.net/install/ in case the instructions below are outdated.
+- Beware of general consideration when running database server, https://www.2ndquadrant.com/en/blog/using-docker-hub-postgresql-images/
+  - Specify volume explicitly to persist data
+  - Do not use dm-thin/lvmthin backed storage driver for Docker
+  - Don't use persisted data directory with a different image
+  - Customize pg_hba.conf
+  
+- When upgrading from an existing database with an older release of PostGIS, be sure to read the upgrade instructions on https://postgis.net/install/ in case the instructions below are outdated.
+
 
 ```
 ALTER EXTENSION postgis UPDATE;
