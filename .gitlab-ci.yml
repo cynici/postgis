@@ -1,0 +1,37 @@
+#
+# After modifying this file, always validate syntax and semantics
+# using https://gitlab.com/rx-replatforming/e-prescribing/-/ci/lint
+#
+
+# This image includes docker-compose
+image: docker:19.03.1
+
+
+stages:
+- build
+
+variables:
+  IMG_TAG: postgresql-11-postgis-2.5
+  # https://gitlab.com/gitlab-org/gitlab-ce/issues/64959
+  #DOCKER_TLS_CERTDIR: ""
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  
+services:
+- docker::19.03.1-dind
+
+before_script:
+- env | grep '^CI_' | sort
+#- docker info
+- docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+
+# https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#using-docker-caching
+build:
+  stage: build
+  script:
+  - set -x
+  - docker pull $CI_REGISTRY_IMAGE:latest || true
+  - docker build -f Dockerfile-$IMG_TAG --tag $CI_REGISTRY_IMAGE:$IMG_TAG --tag $CI_REGISTRY_IMAGE:latest .
+  - docker push $CI_REGISTRY_IMAGE:$IMG_TAG
+  - docker push $CI_REGISTRY_IMAGE:latest
