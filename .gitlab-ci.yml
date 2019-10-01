@@ -4,7 +4,7 @@
 #
 
 # This image includes docker-compose
-image: docker:19.03.2
+image: docker
 
 
 stages:
@@ -19,7 +19,7 @@ variables:
   #DOCKER_TLS_CERTDIR: "/certs"
   
 services:
-- docker::19.03.2-dind
+- docker:dind
 
 before_script:
 - env | grep '^CI_' | sort
