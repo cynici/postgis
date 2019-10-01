@@ -4,7 +4,7 @@
 #
 
 # This image includes docker-compose
-image: docker:19.03.1
+image: docker:19.03.2
 
 
 stages:
@@ -13,13 +13,13 @@ stages:
 variables:
   IMG_TAG: postgresql-11-postgis-2.5
   # https://gitlab.com/gitlab-org/gitlab-ce/issues/64959
-  #DOCKER_TLS_CERTDIR: ""
+  DOCKER_TLS_CERTDIR: ""
   # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
-  DOCKER_HOST: tcp://docker:2376
-  DOCKER_TLS_CERTDIR: "/certs"
+  #DOCKER_HOST: tcp://docker:2376
+  #DOCKER_TLS_CERTDIR: "/certs"
   
 services:
-- docker::19.03.1-dind
+- docker::19.03.2-dind
 
 before_script:
 - env | grep '^CI_' | sort
