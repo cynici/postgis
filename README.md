@@ -1,5 +1,12 @@
 # PostgreSQL and PostGIS in a Docker container
 
+## 2020-05-27 update
+
+Due to work commitment, I may not catch up with latest versions timeously. So I recommend you do this:
+
+- Switch to use the versatile official [postgis/postgis](https://hub.docker.com/r/postgis/postgis) image which offers many tagged combination of PostgreSQL and PostGIS versions
+- If you need the `POSTGRES_UID` feature, grab my [set-postgres-uid.sh](set-postgres-uid.sh) and use it as your *docker-entrypoint*
+
 This project creates a PostgreSQL and PostGIS database server in a Docker container. It is inspired by base image [mdillon/postgis](https://hub.docker.com/r/mdillon/postgis/~/dockerfile/) and includes rsyslog.
 
 The tiny [postgres:alpine](https://hub.docker.com/_/postgres/) is not used as the base image because it is tricky to compile PostGIS in it.
