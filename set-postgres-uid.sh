@@ -9,12 +9,19 @@
 set -eux
 _uid="${POSTGRES_UID:-}"
 _gid="${POSTGRES_GID:-}"
+_home="${PGDATA:-/var/lib/postgresql}"
 if [ -n "$_uid" ] && [ -n "$_gid" ] ; then
-    usermod -u $_uid postgres
-    groupmod -g $_gid postgres
-    chown -R -h ${_uid}:${_gid} ${PGDATA:-/var/lib/postgresql}
-    # TODO: log directory may vary from the default
-    chgrp -R -h ${_gid} /var/log/postgresql
+    if [ -x "/usr/sbin/usermod" ]; then
+        usermod -u $_uid postgres
+        groupmod -g $_gid postgres
+        chown -R -h ${_uid}:${_gid} ${_home}
+        # TODO: log directory may vary from the default
+        chgrp -R -h ${_gid} /var/log/postgresql
+    else
+        deluser postgres
+        addgroup -g ${_gid} postgres
+        adduser -u ${_uid} -G postgres -s /bin/bash --home ${_home} -D postgres
+    fi
     echo "postgres UID/GID set" >&2
 else
     echo "Not setting UID/GID" >&2
@@ -24,4 +31,4 @@ if [ -z "${1:-}" ] || [ "${1:0:1}" = '-' ]; then
     set -- postgres "$@"
 fi
 # Pass control to the default entrypoint script
-exec /docker-entrypoint.sh "$@"
+exec /usr/local/bin/docker-entrypoint.sh "$@"
